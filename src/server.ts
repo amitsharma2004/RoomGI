@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import { config } from './config/index.js';
 import { logger } from './utils/index.js';
 import { errorHandler } from './middleware/index.js';
-import pool from './config/database.js';
+import routes from './routes/index.js';
 
 const app = express();
 
@@ -11,13 +11,20 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-pool.connect()
-    .then(() => logger.info('Connected to PostgreSQL'))
-    .catch((err) => logger.error('PostgreSQL connection error:', err));
+// Routes
+app.use('/api', routes);
 
 // Basic route
 app.get('/', (_req, res) => {
-  res.json({ message: 'Hello from TypeScript server!' });
+  res.json({ 
+    message: 'Rental Truth API - Property Review Platform',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      properties: '/api/properties',
+      reviews: '/api/reviews'
+    }
+  });
 });
 
 // Error handling middleware
@@ -25,5 +32,6 @@ app.use(errorHandler);
 
 // Start server
 app.listen(config.port, () => {
-  logger.info(`Server running on port ${config.port}`);
+  logger.info(`🚀 Rental Truth API running on port ${config.port}`);
+  logger.info(`📍 Environment: ${config.nodeEnv}`);
 });
