@@ -8,17 +8,20 @@
     "dev": "nodemon --exec \"node --loader ts-node/esm\" src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "start:dev": "npm run build && npm start"
+    "start:dev": "npm run build && npm start",
+    "setup-db": "node --loader ts-node/esm src/config/setup-database.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@types/socket.io": "^3.0.1",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "pg": "^8.17.2",
+    "socket.io": "^4.8.3",
     "winston": "^3.19.0"
   },
   "devDependencies": {

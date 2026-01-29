@@ -8,9 +8,15 @@ const propertyController = new PropertyController();
 // Public routes
 router.get('/', (req, res) => propertyController.getProperties(req, res));
 router.get('/:id', (req, res) => propertyController.getProperty(req, res));
+router.get('/:id/activity', (req, res) => propertyController.getPropertyActivity(req, res));
 
 // Protected routes
 router.post('/', authMiddleware, (req, res) => propertyController.createProperty(req, res));
 router.get('/my/properties', authMiddleware, (req, res) => propertyController.getMyProperties(req, res));
+router.patch('/:id/availability', authMiddleware, (req, res) => propertyController.updateAvailability(req, res));
+
+// Demo routes
+router.post('/:id/mock-booking', (req, res) => propertyController.mockBooking(req, res));
+router.post('/:id/generate-activity', (req, res) => propertyController.generateMockActivity(req, res));
 
 export default router;
