@@ -4,8 +4,13 @@ import { config } from './config/index.js';
 import { logger } from './utils/index.js';
 import { errorHandler } from './middleware/index.js';
 import routes from './routes/index.js';
+import pool from './config/database.js';
 
 const app = express();
+
+pool.connect()
+    .then(() => logger.info('Connected to PostgreSQL database'))
+    .catch(err => logger.error('Database connection error:', err));
 
 // Middleware
 app.use(express.json());
@@ -22,7 +27,8 @@ app.get('/', (_req, res) => {
     endpoints: {
       auth: '/api/auth',
       properties: '/api/properties',
-      reviews: '/api/reviews'
+      reviews: '/api/reviews',
+      flags: '/api/flags'
     }
   });
 });
@@ -32,6 +38,6 @@ app.use(errorHandler);
 
 // Start server
 app.listen(config.port, () => {
-  logger.info(`🚀 Rental Truth API running on port ${config.port}`);
-  logger.info(`📍 Environment: ${config.nodeEnv}`);
+  logger.info(`Rental Truth API running on port ${config.port}`);
+  logger.info(`Environment: ${config.nodeEnv}`);
 });

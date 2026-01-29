@@ -8,7 +8,10 @@
     "dev": "nodemon --exec \"node --loader ts-node/esm\" src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "start:dev": "npm run build && npm start"
+    "start:dev": "npm run build && npm start",
+    "db:migrate": "node --loader ts-node/esm src/database/migrate.ts migrate",
+    "db:seed": "node --loader ts-node/esm src/database/migrate.ts seed",
+    "db:reset": "node --loader ts-node/esm src/database/migrate.ts reset"
   },
   "keywords": [],
   "author": "",
