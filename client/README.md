@@ -1,73 +1,80 @@
-# React + TypeScript + Vite
+# Property Management Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React application for property management with role-based authentication.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Authentication System**: Login/Register with JWT tokens
+- **Role-based Access**: Tenant and Owner roles with different permissions
+- **Protected Routes**: Automatic redirects based on authentication status
+- **Responsive Design**: Built with Tailwind CSS
+- **Type Safety**: Full TypeScript support
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 with TypeScript
+- React Router DOM v6 for routing
+- Axios for API calls
+- Tailwind CSS for styling
+- Vite for development and building
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Install dependencies:
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Set up environment variables:
+```bash
+# Copy .env file and update VITE_API_URL if needed
+VITE_API_URL=http://localhost:3000
 ```
+
+3. Start development server:
+```bash
+npm run dev
+```
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── Layout.tsx      # Main layout wrapper
+│   ├── Navbar.tsx      # Navigation component
+│   └── ProtectedRoute.tsx # Route protection
+├── context/            # React Context providers
+│   └── AuthContext.tsx # Authentication state management
+├── lib/               # Utility libraries
+│   └── axios.ts       # Axios configuration
+├── pages/             # Page components
+│   ├── HomePage.tsx   # Dashboard page
+│   ├── LoginPage.tsx  # Login form
+│   └── RegisterPage.tsx # Registration form
+├── types/             # TypeScript type definitions
+│   └── index.ts       # Shared types
+└── App.tsx            # Main application component
+```
+
+## Authentication Flow
+
+1. **Registration**: Users select role (tenant/owner) and create account
+2. **Login**: Email/password authentication with JWT token
+3. **Token Storage**: Tokens stored in localStorage with automatic refresh
+4. **Role-based Routing**: Different access levels for tenants vs owners
+5. **Auto-logout**: Automatic logout on token expiration
+
+## Available Routes
+
+- `/login` - Login page (public)
+- `/register` - Registration page (public)
+- `/` - Dashboard (protected)
+- `/add-property` - Add property form (owner only)
+
+## API Integration
+
+The client is configured to work with the backend API:
+- Base URL: `VITE_API_URL` environment variable
+- Authentication: Bearer token in Authorization header
+- Error handling: Automatic logout on 401 responses

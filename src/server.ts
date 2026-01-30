@@ -5,13 +5,23 @@ import { logger } from './utils/index.js';
 import { errorHandler } from './middleware/index.js';
 import routes from './routes/index.js';
 import pool from './config/database.js';
+import cors from 'cors';
 
 const app = express();
 
+// Try to connect to database, but don't fail if it's not available
 pool.connect()
-    .then(() => logger.info('Connected to PostgreSQL database'))
-    .catch(err => logger.error('Database connection error:', err));
+    .then(() => {
+        logger.info('Connected to PostgreSQL database');
+    })
+    .catch(err => {
+        logger.error('Database connection error:', err);
+    });
 
+app.use(cors({
+        origin: '*',
+        credentials: true
+    }));
 // Middleware
 app.use(express.json());
 app.use(cookieParser());

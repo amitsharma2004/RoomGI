@@ -3,6 +3,7 @@ import { join } from 'path';
 import pool from '../config/database.js';
 import { logger } from '../utils/index.js';
 
+console.log(">>> SCRIPT STARTED: migrate.ts is running");
 export async function runMigrations() {
   try {
     logger.info('Running database migrations...');
@@ -39,21 +40,26 @@ export async function seedDatabase() {
 }
 
 // CLI runner
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Replace your existing CLI runner block with this:
+const run = async () => {
   const command = process.argv[2];
-  
+  console.log(`>>> Received command: ${command}`);
+
   if (command === 'migrate') {
-    await runMigrations();
-    process.exit(0);
+    const success = await runMigrations();
+    process.exit(success ? 0 : 1);
   } else if (command === 'seed') {
-    await seedDatabase();
-    process.exit(0);
+    const success = await seedDatabase();
+    process.exit(success ? 0 : 1);
   } else if (command === 'reset') {
-    await runMigrations();
-    await seedDatabase();
-    process.exit(0);
+    const mSuccess = await runMigrations();
+    const sSuccess = await seedDatabase();
+    process.exit(mSuccess && sSuccess ? 0 : 1);
   } else {
     console.log('Usage: npm run db:migrate | npm run db:seed | npm run db:reset');
     process.exit(1);
   }
-}
+};
+
+// Start the execution
+run();

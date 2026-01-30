@@ -1,17 +1,18 @@
 import { User, LoginDto, RegisterDto, AuthResponse } from './auth.types.js';
 import { DatabaseService } from '../../database/database.service.js';
+import { logger } from '../../utils/logger.js';
 
 const db = new DatabaseService();
 
 export class AuthService {
   async register(userData: RegisterDto): Promise<AuthResponse> {
+    logger.info ('registering the user...');
     try {
       // Check if user already exists
       const existingUser = await db.getUserByEmail(userData.email);
       if (existingUser) {
         throw new Error('User already exists');
       }
-
       // Create user (in production, hash the password!)
       const user = await db.createUser(userData);
       const token = `token_${user.id}_${Date.now()}`;

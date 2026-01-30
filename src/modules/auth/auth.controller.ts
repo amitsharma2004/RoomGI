@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
+import { logger } from '../../utils/logger.js';
 
 export class AuthController {
   private authService = new AuthService();
@@ -17,8 +18,10 @@ export class AuthController {
       }
 
       const result = await this.authService.register({ email, password, role });
+      logger.info('User registered successfully');
       res.status(201).json(result);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error (error);
       res.status(400).json({ error: 'Registration failed' });
     }
   }
