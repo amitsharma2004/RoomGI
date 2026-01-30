@@ -1,10 +1,12 @@
 -- Database migrations for real-time availability engine
 
--- Create properties table with availability fields
+-- Create properties table with availability fields and coordinates
 CREATE TABLE IF NOT EXISTS properties (
     id SERIAL PRIMARY KEY,
     owner_id VARCHAR(255) NOT NULL,
     location VARCHAR(500) NOT NULL,
+    lat DECIMAL(10, 8), -- Latitude with precision for GPS coordinates
+    lng DECIMAL(11, 8), -- Longitude with precision for GPS coordinates
     rent INTEGER NOT NULL,
     property_type VARCHAR(50) NOT NULL CHECK (property_type IN ('apartment', 'house', 'condo', 'studio')),
     total_beds INTEGER NOT NULL DEFAULT 1,
@@ -29,17 +31,18 @@ CREATE INDEX IF NOT EXISTS idx_properties_owner_id ON properties(owner_id);
 CREATE INDEX IF NOT EXISTS idx_properties_location ON properties USING gin(to_tsvector('english', location));
 CREATE INDEX IF NOT EXISTS idx_properties_rent ON properties(rent);
 CREATE INDEX IF NOT EXISTS idx_properties_beds_available ON properties(beds_available);
+CREATE INDEX IF NOT EXISTS idx_properties_coordinates ON properties(lat, lng);
 CREATE INDEX IF NOT EXISTS idx_property_activity_property_id ON property_activity(property_id);
 CREATE INDEX IF NOT EXISTS idx_property_activity_type ON property_activity(activity_type);
 CREATE INDEX IF NOT EXISTS idx_property_activity_created_at ON property_activity(created_at);
 
--- Insert sample data for demo
-INSERT INTO properties (owner_id, location, rent, property_type, total_beds, beds_available, verified) VALUES
-('owner_1', 'Downtown Manhattan, NYC', 3500, 'apartment', 8, 6, true),
-('owner_2', 'Brooklyn Heights, NYC', 2800, 'house', 12, 3, true),
-('owner_3', 'Mission District, San Francisco', 4200, 'condo', 6, 2, true),
-('owner_1', 'Capitol Hill, Seattle', 2200, 'studio', 4, 4, false),
-('owner_4', 'Back Bay, Boston', 3800, 'apartment', 10, 1, true)
+-- Insert sample data for demo with coordinates
+INSERT INTO properties (owner_id, location, lat, lng, rent, property_type, total_beds, beds_available, verified) VALUES
+('owner_1', 'Downtown Manhattan, NYC', 40.7589, -73.9851, 3500, 'apartment', 8, 6, true),
+('owner_2', 'Brooklyn Heights, NYC', 40.6962, -73.9936, 2800, 'house', 12, 3, true),
+('owner_3', 'Mission District, San Francisco', 37.7599, -122.4148, 4200, 'condo', 6, 2, true),
+('owner_1', 'Capitol Hill, Seattle', 47.6205, -122.3212, 2200, 'studio', 4, 4, false),
+('owner_4', 'Back Bay, Boston', 42.3505, -71.0759, 3800, 'apartment', 10, 1, true)
 ON CONFLICT DO NOTHING;
 
 -- Insert sample activity data

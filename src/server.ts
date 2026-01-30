@@ -11,7 +11,7 @@ import pool from './config/database.js';
 const app = express();
 const httpServer = createServer(app);
 
-pool.connect()
+const db = pool.connect()
     .then
 (() => logger.info('Database connected successfully'))
     .catch(err => logger.error('Database connection failed:', err));
@@ -36,16 +36,29 @@ app.use('/api', routes);
 // Basic route
 app.get('/', (_req, res) => {
   res.json({ 
-    message: 'Rental Truth API - Property Review Platform with Real-time Availability',
-    version: '1.0.0',
-    features: ['Real-time property viewing', 'Live availability updates', 'Booking notifications'],
+    message: 'Rental Truth API - Property Review Platform with Real-time Availability & Neighborhood DNA',
+    version: '2.0.0',
+    features: [
+      'Real-time property viewing', 
+      'Live availability updates', 
+      'Booking notifications',
+      'Neighborhood DNA analysis',
+      'Lifestyle-based property search',
+      'Transit & safety scoring'
+    ],
     endpoints: {
       auth: '/api/auth',
       properties: '/api/properties',
-      reviews: '/api/reviews'
+      reviews: '/api/reviews',
+      neighborhood: '/api/properties/:id/neighborhood',
+      lifestyleSearch: '/api/properties/search/by-lifestyle'
     },
     websocket: {
       events: ['view_property', 'leave_property', 'viewer_count_updated', 'availability_updated', 'booking_activity']
+    },
+    testPages: {
+      realTimeAvailability: '/socket-test.html',
+      neighborhoodDNA: '/neighborhood-test.html'
     }
   });
 });
@@ -57,6 +70,4 @@ app.use(errorHandler);
 httpServer.listen(config.port, () => {
   logger.info(`Rental Truth API running on port ${config.port}`);
   logger.info(`Environment: ${config.nodeEnv}`);
-  logger.info(`WebSocket server ready for real-time updates`);
-  logger.info(`Features: Real-time availability tracking, live viewer counts, booking notifications`);
 });

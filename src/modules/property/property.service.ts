@@ -1,10 +1,12 @@
-import { Property, CreatePropertyDto, PropertyWithStats, UpdateAvailabilityDto, PropertyWithActivity } from './property.types.js';
+import { Property, CreatePropertyDto, PropertyWithStats, UpdateAvailabilityDto, PropertyWithActivity, PropertyWithNeighborhood, LifestyleSearchFilters } from './property.types.js';
 import { PropertyActivityService } from './property-activity.service.js';
+import { NeighborhoodService } from './neighborhood.service.js';
 import pool from '../../config/database.js';
 import { logger } from '../../utils/index.js';
 
 export class PropertyService {
   private activityService = new PropertyActivityService();
+  private neighborhoodService = new NeighborhoodService();
   private mockProperties: Property[] = []; // Fallback storage
   private useMockData = false;
 
@@ -19,6 +21,8 @@ export class PropertyService {
         id: '1',
         ownerId: 'owner_1',
         location: 'Downtown Manhattan, NYC',
+        lat: 40.7589,
+        lng: -73.9851,
         rent: 3500,
         propertyType: 'apartment',
         totalBeds: 8,
@@ -32,6 +36,8 @@ export class PropertyService {
         id: '2',
         ownerId: 'owner_2',
         location: 'Brooklyn Heights, NYC',
+        lat: 40.6962,
+        lng: -73.9936,
         rent: 2800,
         propertyType: 'house',
         totalBeds: 12,
@@ -44,6 +50,8 @@ export class PropertyService {
         id: '3',
         ownerId: 'owner_3',
         location: 'Mission District, San Francisco',
+        lat: 37.7599,
+        lng: -122.4148,
         rent: 4200,
         propertyType: 'condo',
         totalBeds: 6,
@@ -410,5 +418,142 @@ export class PropertyService {
   // Get current mode for debugging
   public isMockMode(): boolean {
     return this.useMockData;
+  }
+
+  // Neighborhood DNA Analysis
+  async getPropertyNeighborhood(propertyId: string): Promise<PropertyWithNeighborhood | null> {
+    const property = await this.getPropertyWithActivity(propertyId);
+    if (!property) return null;
+
+    // If property has coordinates, analyze neighborhood
+    if (property.lat && property.lng) {
+      const neighborhoodDNA = await this.neighborhoodService.analyzeNeighborhood(property.lat, property.lng);
+      return {
+        ...property,
+        neighborhoodDNA
+      };
+    }
+
+    // Return property without neighborhood data if no coordinates
+    return property;
+  }
+
+  async searchPropertiesByLifestyle(filters: LifestyleSearchFilters): Promise<PropertyWithNeighborhood[]> {
+    // Get all properties first
+    const properties = await this.getAllProperties();
+    const results: PropertyWithNeighborhood[] = [];
+
+    for (const property of properties) {
+      if (!property.lat || !property.lng) continue;
+
+      // Get neighborhood analysis
+      const neighborhoodDNA = await this.neighborhoodService.analyzeNeighborhood(property.lat, property.lng);
+      
+      // Apply filters
+      if (this.matchesLifestyleFilters(neighborhoodDNA, filters)) {
+        const propertyWithActivity = await this.getPropertyWithActivity(property.id);
+        if (propertyWithActivity) {
+          results.push({
+            ...propertyWithActivity,
+            lat: property.lat,
+            lng: property.lng,
+            neighborhoodDNA
+          });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  private matchesLifestyleFilters(dna: any, filters: LifestyleSearchFilters): boolean {
+    // Transit filter (e.g., 'min-80' means minimum 80 score)
+    if (filters.transit) {
+      const match = filters.transit.match(/min-(\d+)/);
+      if (match) {
+        const minScore = parseInt(match[1]);
+        if (dna.transitScore < minScore) return false;
+      }
+    }
+
+    // Nightlife filter
+    if (filters.nightlife) {
+      const score = dna.lifestyleProfile.nightlife;
+      if (filters.nightlife === 'low' && score > 30) return false;
+      if (filters.nightlife === 'medium' && (score < 30 || score > 70)) return false;
+      if (filters.nightlife === 'high' && score < 70) return false;
+    }
+
+    // Safety filter
+    if (filters.safety) {
+      const score = dna.safetyScore;
+      if (filters.safety === 'low' && score > 40) return false;
+      if (filters.safety === 'medium' && (score < 40 || score > 70)) return false;
+      if (filters.safety === 'high' && score < 70) return false;
+    }
+
+    // Quietness filter
+    if (filters.quietness) {
+      const score = dna.lifestyleProfile.quietness;
+      if (filters.quietness === 'low' && score > 40) return false;
+      if (filters.quietness === 'medium' && (score < 40 || score > 70)) return false;
+      if (filters.quietness === 'high' && score < 70) return false;
+    }
+
+    // Food options filter
+    if (filters.foodOptions) {
+      const score = dna.lifestyleProfile.foodOptions;
+      if (filters.foodOptions === 'low' && score > 40) return false;
+      if (filters.foodOptions === 'medium' && (score < 40 || score > 70)) return false;
+      if (filters.foodOptions === 'high' && score < 70) return false;
+    }
+
+    // Student friendly filter
+    if (filters.studentFriendly) {
+      const score = dna.lifestyleProfile.studentFriendly;
+      if (filters.studentFriendly === 'low' && score > 40) return false;
+      if (filters.studentFriendly === 'medium' && (score < 40 || score > 70)) return false;
+      if (filters.studentFriendly === 'high' && score < 70) return false;
+    }
+
+    return true;
+  }
+
+  // Add coordinates to existing property
+  async updatePropertyCoordinates(propertyId: string, ownerId: string, lat: number, lng: number): Promise<Property | null> {
+    try {
+      const query = `
+        UPDATE properties 
+        SET lat = $1, lng = $2, updated_at = NOW()
+        WHERE id = $3 AND owner_id = $4
+        RETURNING 
+          id, 
+          owner_id as "ownerId", 
+          location, 
+          lat,
+          lng,
+          rent, 
+          property_type as "propertyType", 
+          total_beds as "totalBeds",
+          beds_available as "bedsAvailable",
+          verified, 
+          last_booked_at as "lastBookedAt",
+          created_at as "createdAt", 
+          updated_at as "updatedAt"
+      `;
+
+      const result = await pool.query(query, [lat, lng, propertyId, ownerId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      // Mock mode fallback
+      const property = this.mockProperties.find(p => p.id === propertyId && p.ownerId === ownerId);
+      if (property) {
+        property.lat = lat;
+        property.lng = lng;
+        property.updatedAt = new Date();
+        return property;
+      }
+      return null;
+    }
   }
 }

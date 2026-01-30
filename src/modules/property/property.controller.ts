@@ -14,7 +14,7 @@ export class PropertyController {
         return res.status(403).json({ error: 'Only owners can create properties' });
       }
 
-      const { location, rent, propertyType, totalBeds, bedsAvailable } = req.body;
+      const { location, lat, lng, rent, propertyType, totalBeds, bedsAvailable } = req.body;
       
       if (!location || !rent || !propertyType || !totalBeds) {
         return res.status(400).json({ error: 'Location, rent, property type, and total beds are required' });
@@ -22,6 +22,8 @@ export class PropertyController {
 
       const property = await this.propertyService.createProperty(user.id, {
         location,
+        lat: lat ? Number(lat) : undefined,
+        lng: lng ? Number(lng) : undefined,
         rent: Number(rent),
         propertyType,
         totalBeds: Number(totalBeds),
@@ -180,6 +182,111 @@ export class PropertyController {
       
       await this.activityService.generateMockActivity(propertyId);
       res.json({ success: true, message: 'Mock activity generated' });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // Neighborhood DNA endpoints
+  async getPropertyNeighborhood(req: Request, res: Response) {
+    try {
+      const propertyId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      
+      const propertyWithNeighborhood = await this.propertyService.getPropertyNeighborhood(propertyId);
+      
+      if (!propertyWithNeighborhood) {
+        return res.status(404).json({ error: 'Property not found' });
+      }
+
+      if (!propertyWithNeighborhood.neighborhoodDNA) {
+        return res.status(400).json({ 
+          error: 'Property coordinates not available for neighborhood analysis',
+          suggestion: 'Add latitude and longitude to enable neighborhood DNA analysis'
+        });
+      }
+      
+      res.json({
+        property: {
+          id: propertyWithNeighborhood.id,
+          location: propertyWithNeighborhood.location,
+          coordinates: {
+            lat: propertyWithNeighborhood.lat,
+            lng: propertyWithNeighborhood.lng
+          }
+        },
+        neighborhoodDNA: propertyWithNeighborhood.neighborhoodDNA
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async searchPropertiesByLifestyle(req: Request, res: Response) {
+    try {
+      const filters = req.query as any;
+      
+      const properties = await this.propertyService.searchPropertiesByLifestyle(filters);
+      
+      res.json({
+        count: properties.length,
+        filters: filters,
+        properties: properties.map(p => ({
+          id: p.id,
+          location: p.location,
+          rent: p.rent,
+          propertyType: p.propertyType,
+          bedsAvailable: p.bedsAvailable,
+          totalBeds: p.totalBeds,
+          urgencyLevel: p.urgencyLevel,
+          coordinates: {
+            lat: p.lat,
+            lng: p.lng
+          },
+          neighborhoodScores: {
+            transit: p.neighborhoodDNA?.transitScore,
+            safety: p.neighborhoodDNA?.safetyScore,
+            nightlife: p.neighborhoodDNA?.lifestyleProfile.nightlife,
+            quietness: p.neighborhoodDNA?.lifestyleProfile.quietness,
+            foodOptions: p.neighborhoodDNA?.lifestyleProfile.foodOptions,
+            studentFriendly: p.neighborhoodDNA?.lifestyleProfile.studentFriendly
+          },
+          commuteHubs: p.neighborhoodDNA?.commuteHubs?.slice(0, 2) // Show top 2
+        }))
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async updatePropertyCoordinates(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      const propertyId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const { lat, lng } = req.body;
+
+      if (user.role !== 'owner') {
+        return res.status(403).json({ error: 'Only owners can update property coordinates' });
+      }
+
+      if (!lat || !lng || typeof lat !== 'number' || typeof lng !== 'number') {
+        return res.status(400).json({ error: 'Valid latitude and longitude are required' });
+      }
+
+      const updatedProperty = await this.propertyService.updatePropertyCoordinates(
+        propertyId, 
+        user.id, 
+        lat, 
+        lng
+      );
+
+      if (!updatedProperty) {
+        return res.status(404).json({ error: 'Property not found or unauthorized' });
+      }
+
+      res.json({
+        message: 'Property coordinates updated successfully',
+        property: updatedProperty
+      });
     } catch (error) {
       res.status(500).json({ error: 'Internal server error' });
     }
