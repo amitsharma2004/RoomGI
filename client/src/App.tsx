@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute, Layout } from './components';
-import { LoginPage, RegisterPage, HomePage, PropertiesPage, PropertyDetailPage } from './pages';
+import { LoginPage, RegisterPage, HomePage, PropertiesPage, PropertyDetailPage, OwnerDashboard } from './pages';
 
 const AppRoutes: React.FC = () => {
   const { user } = useAuth();
@@ -41,6 +41,16 @@ const AppRoutes: React.FC = () => {
           <Layout>
             <PropertyDetailPage />
           </Layout>
+        }
+      />
+      <Route
+        path="/owner/dashboard"
+        element={
+          <ProtectedRoute requiredRole="owner">
+            <Layout>
+              <OwnerDashboard />
+            </Layout>
+          </ProtectedRoute>
         }
       />
       <Route

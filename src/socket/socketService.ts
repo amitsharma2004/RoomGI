@@ -151,6 +151,12 @@ class SocketService {
     });
   }
 
+  emitViewerCountUpdated(propertyId: string, count: number): void {
+    if (!this.io) return;
+    
+    this.io.emit('viewer_count_updated', { propertyId, count });
+  }
+
   getViewerCount(propertyId: string): number {
     return this.viewers.get(propertyId)?.length || 0;
   }

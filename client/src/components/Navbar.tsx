@@ -36,6 +36,14 @@ const Navbar: React.FC = () => {
               >
                 Browse Properties
               </Link>
+              {user.role === 'owner' && (
+                <Link
+                  to="/owner/dashboard"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  My Properties
+                </Link>
+              )}
             </div>
           </div>
           
