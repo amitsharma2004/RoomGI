@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type { Property } from '../hooks';
 import { useAuth } from '../context/AuthContext';
 import { socketService } from '../lib/socket';
-import { useToast, ToastContainer, NeighborhoodDNA } from '../components';
+import { useToast, ToastContainer, NeighborhoodDNA, ReviewsSection } from '../components';
 import type { ActivityItem } from '../types/activity';
 import api from '../lib/axios';
 
@@ -16,7 +16,7 @@ export const PropertyDetailPage: React.FC = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'activity'>('overview');
   const [viewerCount, setViewerCount] = useState(0);
   const [lastBookedTime, setLastBookedTime] = useState<string>('');
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
@@ -263,6 +263,16 @@ export const PropertyDetailPage: React.FC = () => {
                 Overview
               </button>
               <button
+                onClick={() => setActiveTab('reviews')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'reviews'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Reviews
+              </button>
+              <button
                 onClick={() => setActiveTab('activity')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'activity'
@@ -340,6 +350,10 @@ export const PropertyDetailPage: React.FC = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <ReviewsSection propertyId={id!} />
           )}
 
           {activeTab === 'activity' && (
