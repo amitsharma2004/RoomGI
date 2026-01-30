@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type { Property } from '../hooks';
 import { useAuth } from '../context/AuthContext';
 import { socketService } from '../lib/socket';
-import { useToast, ToastContainer } from '../components/Toast';
+import { useToast, ToastContainer, NeighborhoodDNA } from '../components';
 import type { ActivityItem } from '../types/activity';
 import api from '../lib/axios';
 
@@ -242,6 +242,11 @@ export const PropertyDetailPage: React.FC = () => {
               <p>Property Images</p>
               <p className="text-sm">(Gallery coming soon)</p>
             </div>
+          </div>
+
+          {/* Neighborhood DNA Component */}
+          <div className="mb-6">
+            <NeighborhoodDNA propertyId={id!} />
           </div>
 
           {/* Tabs */}
