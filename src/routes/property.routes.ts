@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { PropertyController } from '../modules/property/index.js';
+import { NeighborhoodController } from '../modules/neighborhood/neighborhood.controller.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = Router();
 const propertyController = new PropertyController();
+const neighborhoodController = new NeighborhoodController();
 
 // Public routes
 router.get('/', (req, res) => propertyController.getProperties(req, res));
@@ -11,6 +13,11 @@ router.get('/search/by-lifestyle', (req, res) => propertyController.searchByLife
 router.get('/:id', (req, res) => propertyController.getProperty(req, res));
 router.get('/:id/viewing-count', (req, res) => propertyController.getViewingCount(req, res));
 router.get('/:id/activity', (req, res) => propertyController.getActivity(req, res));
+router.get('/:id/neighborhood', (req, res) => {
+  // Map the route to use propertyId parameter
+  (req.params as any).propertyId = req.params.id;
+  neighborhoodController.getNeighborhoodData(req, res);
+});
 
 // Protected routes
 router.post('/', authMiddleware, (req, res) => propertyController.createProperty(req, res));
