@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -91,22 +91,17 @@ export const PropertiesMapPage: React.FC = () => {
   const [filters, setFilters] = useState<LifestyleFilters>({});
   const { properties, loading, error, searchByLifestyle } = useProperties();
 
-  useEffect(() => {
-    // Apply filters when they change
-    if (Object.keys(filters).length > 0) {
-      searchByLifestyle(filters);
-    }
-  }, [filters, searchByLifestyle]);
-
-  const handleApplyFilters = (newFilters: LifestyleFilters) => {
+  const handleApplyFilters = useCallback((newFilters: LifestyleFilters) => {
     setFilters(newFilters);
-  };
+    // Apply filters immediately when they change
+    searchByLifestyle(newFilters);
+  }, [searchByLifestyle]);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({});
-    // Reload all properties
-    window.location.reload();
-  };
+    // Reload all properties without filters
+    searchByLifestyle({});
+  }, [searchByLifestyle]);
 
   // Filter properties that have coordinates
   const mappableProperties = properties.filter(p => p.latitude && p.longitude);

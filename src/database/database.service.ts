@@ -16,7 +16,7 @@ export class DatabaseService {
     
     const result = await pool.query(query, [
       userData.email,
-      userData.password, // In production, hash this!
+      userData.password, // This is now a hashed password
       userData.role
     ]);
     
@@ -27,6 +27,21 @@ export class DatabaseService {
     const query = 'SELECT id, email, role, created_at, updated_at FROM users WHERE email = $1';
     const result = await pool.query(query, [email]);
     return result.rows[0] || null;
+  }
+
+  async getUserByEmailWithPassword(email: string): Promise<(User & { passwordHash: string }) | null> {
+    const query = 'SELECT id, email, password_hash, role, created_at, updated_at FROM users WHERE email = $1';
+    const result = await pool.query(query, [email]);
+    if (!result.rows[0]) return null;
+    
+    return {
+      id: result.rows[0].id,
+      email: result.rows[0].email,
+      role: result.rows[0].role,
+      createdAt: result.rows[0].created_at,
+      updatedAt: result.rows[0].updated_at,
+      passwordHash: result.rows[0].password_hash
+    };
   }
 
   async getUserById(id: string): Promise<User | null> {
@@ -40,15 +55,17 @@ export class DatabaseService {
     const query = `
       INSERT INTO properties (
         owner_id, location, rent, property_type, beds_available, total_beds,
-        latitude, longitude,
+        images, latitude, longitude,
         nightlife_score, transit_score, safety_score, quietness_score, food_score, student_friendly_score
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING id, owner_id, location, rent, property_type, beds_available, total_beds,
-                latitude, longitude,
+                images, latitude, longitude,
                 nightlife_score, transit_score, safety_score, quietness_score, food_score, student_friendly_score,
                 verified, created_at, updated_at
     `;
+    
+    const imagesToStore = propertyData.images || [];
     
     const result = await pool.query(query, [
       ownerId,
@@ -57,6 +74,7 @@ export class DatabaseService {
       propertyData.propertyType,
       propertyData.bedsAvailable || 1,
       propertyData.totalBeds || 1,
+      imagesToStore, // Store images array
       propertyData.latitude || null,
       propertyData.longitude || null,
       propertyData.nightlifeScore || 2,
@@ -73,7 +91,7 @@ export class DatabaseService {
   async getPropertyById(id: string): Promise<Property | null> {
     const query = `
       SELECT id, owner_id, location, rent, property_type, beds_available, total_beds,
-             latitude, longitude,
+             images, latitude, longitude,
              nightlife_score, transit_score, safety_score, quietness_score, food_score, student_friendly_score,
              verified, created_at, updated_at
       FROM properties WHERE id = $1
@@ -88,7 +106,7 @@ export class DatabaseService {
   async getPropertiesByOwner(ownerId: string): Promise<Property[]> {
     const query = `
       SELECT id, owner_id, location, rent, property_type, beds_available, total_beds,
-             latitude, longitude,
+             images, latitude, longitude,
              nightlife_score, transit_score, safety_score, quietness_score, food_score, student_friendly_score,
              verified, created_at, updated_at
       FROM properties WHERE owner_id = $1
@@ -101,7 +119,7 @@ export class DatabaseService {
   async searchProperties(location?: string, maxRent?: number): Promise<Property[]> {
     let query = `
       SELECT id, owner_id, location, rent, property_type, beds_available, total_beds,
-             latitude, longitude,
+             images, latitude, longitude,
              nightlife_score, transit_score, safety_score, quietness_score, food_score, student_friendly_score,
              verified, created_at, updated_at
       FROM properties WHERE 1=1
@@ -131,7 +149,7 @@ export class DatabaseService {
   async searchPropertiesByLifestyle(filters: LifestyleFilters): Promise<Property[]> {
     let query = `
       SELECT id, owner_id, location, rent, property_type, beds_available, total_beds,
-             latitude, longitude,
+             images, latitude, longitude,
              nightlife_score, transit_score, safety_score, quietness_score, food_score, student_friendly_score,
              verified, created_at, updated_at
       FROM properties WHERE 1=1
@@ -244,6 +262,8 @@ export class DatabaseService {
   }
 
   private mapPropertyFromDb(row: any): Property {
+    const images = Array.isArray(row.images) ? row.images : [];
+    
     return {
       id: row.id,
       ownerId: row.owner_id,
@@ -252,6 +272,7 @@ export class DatabaseService {
       propertyType: row.property_type,
       bedsAvailable: row.beds_available,
       totalBeds: row.total_beds,
+      images: images, // Handle PostgreSQL array
       latitude: row.latitude ? parseFloat(row.latitude) : undefined,
       longitude: row.longitude ? parseFloat(row.longitude) : undefined,
       nightlifeScore: row.nightlife_score,

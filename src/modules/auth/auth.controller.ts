@@ -21,8 +21,17 @@ export class AuthController {
       logger.info('User registered successfully');
       res.status(201).json(result);
     } catch (error: any) {
-      logger.error (error);
-      res.status(400).json({ error: 'Registration failed' });
+      logger.error('Registration failed:', error);
+      
+      // Handle specific database errors
+      if (error.code === '23505') { // PostgreSQL unique constraint violation
+        return res.status(400).json({ error: 'User with this email already exists' });
+      }
+      
+      res.status(400).json({ 
+        error: error.message || 'Registration failed',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   }
 
@@ -35,8 +44,10 @@ export class AuthController {
       }
 
       const result = await this.authService.login({ email, password });
+      logger.info(`User logged in successfully: ${email}`);
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('Login attempt failed:', { email: req.body?.email, error: error.message });
       res.status(401).json({ error: 'Invalid credentials' });
     }
   }

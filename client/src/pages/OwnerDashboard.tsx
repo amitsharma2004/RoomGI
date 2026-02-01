@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useToast, ToastContainer } from '../components';
+import { useToast, ToastContainer, ViewingCountBadge } from '../components';
 import { CoordinatePicker } from '../components/CoordinatePicker';
 import type { Property } from '../hooks';
 import api from '../lib/axios';
@@ -16,8 +16,6 @@ export const OwnerDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [simulatingTraffic, setSimulatingTraffic] = useState(false);
-  const [simulatingBookings, setSimulatingBookings] = useState(false);
 
   useEffect(() => {
     if (user?.role === 'owner') {
@@ -67,70 +65,7 @@ export const OwnerDashboard: React.FC = () => {
     }
   };
 
-  const generateMockActivity = async (propertyId: string) => {
-    try {
-      const response = await api.post(`/api/properties/${propertyId}/generate-activity`);
-      console.log('Mock Activity Generated:', response.data);
-      addToast(`Generated ${response.data.activities?.length || 'some'} mock activities`, 'success');
-    } catch (err: any) {
-      console.error('Generate activity error:', err);
-      addToast(err.response?.data?.error || 'Failed to generate activity', 'error');
-    }
-  };
 
-  const simulateBooking = async (propertyId: string, bedsToBook: number) => {
-    try {
-      const response = await api.post(`/api/properties/${propertyId}/mock-booking`, {
-        bedsToBook
-      });
-      console.log('Booking Simulated:', response.data);
-      
-      // Update local state
-      setProperties(prev => prev.map(p => 
-        p.id === propertyId 
-          ? { ...p, bedsAvailable: response.data.newAvailability }
-          : p
-      ));
-
-      addToast(response.data.message, 'success');
-    } catch (err: any) {
-      console.error('Simulate booking error:', err);
-      addToast(err.response?.data?.error || 'Failed to simulate booking', 'error');
-    }
-  };
-
-  const simulateHighTraffic = async () => {
-    try {
-      setSimulatingTraffic(true);
-      const response = await api.post('/api/properties/simulate/high-traffic');
-      console.log('High Traffic Simulated:', response.data);
-      addToast(response.data.message, 'success');
-    } catch (err: any) {
-      console.error('Simulate traffic error:', err);
-      addToast(err.response?.data?.error || 'Failed to simulate traffic', 'error');
-    } finally {
-      setSimulatingTraffic(false);
-    }
-  };
-
-  const simulateBookingSpike = async () => {
-    try {
-      setSimulatingBookings(true);
-      const response = await api.post('/api/properties/simulate/booking-spike');
-      console.log('Booking Spike Simulated:', response.data);
-      addToast(response.data.message, 'success');
-      
-      // Refresh properties to show updated availability
-      setTimeout(() => {
-        fetchMyProperties();
-      }, 3000);
-    } catch (err: any) {
-      console.error('Simulate booking spike error:', err);
-      addToast(err.response?.data?.error || 'Failed to simulate booking spike', 'error');
-    } finally {
-      setSimulatingBookings(false);
-    }
-  };
 
   if (user?.role !== 'owner') {
     return (
@@ -176,32 +111,33 @@ export const OwnerDashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* Mock Tools Section */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">🚀 Demo Tools (Hackathon)</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Use these tools to simulate real-time activity for demo purposes
-        </p>
-        <div className="flex gap-4">
-          <button
-            onClick={simulateHighTraffic}
-            disabled={simulatingTraffic}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-          >
-            {simulatingTraffic ? 'Simulating...' : 'Simulate High Traffic'}
-          </button>
-          <button
-            onClick={simulateBookingSpike}
-            disabled={simulatingBookings}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-          >
-            {simulatingBookings ? 'Simulating...' : 'Simulate Booking Spike'}
-          </button>
+      {/* Dashboard Stats */}
+      {properties.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="text-2xl font-bold text-blue-600">{properties.length}</div>
+            <div className="text-sm text-gray-500">Total Properties</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {properties.reduce((sum, p) => sum + p.bedsAvailable, 0)}
+            </div>
+            <div className="text-sm text-gray-500">Available Beds</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="text-2xl font-bold text-purple-600">
+              {properties.reduce((sum, p) => sum + (p.reviewCount || 0), 0)}
+            </div>
+            <div className="text-sm text-gray-500">Total Reviews</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="text-2xl font-bold text-orange-600">
+              {properties.reduce((sum, p) => sum + (p.viewingCount || 0), 0)}
+            </div>
+            <div className="text-sm text-gray-500">People Viewing</div>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Check browser console for detailed logs and responses
-        </p>
-      </div>
+      )}
 
       {/* Properties List */}
       {error ? (
@@ -221,8 +157,6 @@ export const OwnerDashboard: React.FC = () => {
               key={property.id}
               property={property}
               onUpdateAvailability={updateAvailability}
-              onGenerateActivity={generateMockActivity}
-              onSimulateBooking={simulateBooking}
             />
           ))}
         </div>
@@ -260,17 +194,12 @@ export const OwnerDashboard: React.FC = () => {
 interface PropertyCardProps {
   property: PropertyWithActions;
   onUpdateAvailability: (propertyId: string, newAvailability: number) => void;
-  onGenerateActivity: (propertyId: string) => void;
-  onSimulateBooking: (propertyId: string, bedsToBook: number) => void;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
   property,
-  onUpdateAvailability,
-  onGenerateActivity,
-  onSimulateBooking
+  onUpdateAvailability
 }) => {
-  const [bookingBeds, setBookingBeds] = useState(1);
 
   const handleDecrease = () => {
     if (property.bedsAvailable > 0) {
@@ -284,11 +213,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     }
   };
 
-  const handleSimulateBooking = () => {
-    if (bookingBeds <= property.bedsAvailable) {
-      onSimulateBooking(property.id, bookingBeds);
-    }
-  };
+
 
   const getAvailabilityColor = () => {
     const ratio = property.bedsAvailable / property.totalBeds;
@@ -301,10 +226,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
-            {property.location}
-          </h3>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-semibold text-gray-900 truncate">
+              {property.location}
+            </h3>
+            <ViewingCountBadge 
+              propertyId={property.id} 
+              variant="compact"
+              pollInterval={8000}
+            />
+          </div>
           <p className="text-sm text-gray-600 capitalize">{property.propertyType}</p>
         </div>
         {property.verified && (
@@ -348,36 +280,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           >
             +
           </button>
-        </div>
-      </div>
-
-      {/* Demo Actions */}
-      <div className="space-y-2">
-        <button
-          onClick={() => onGenerateActivity(property.id)}
-          className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium py-2 px-3 rounded-md text-sm transition-colors duration-200"
-        >
-          Generate Mock Activity
-        </button>
-        
-        <div className="flex gap-2">
-          <div className="flex-1 flex items-center gap-1">
-            <input
-              type="number"
-              min="1"
-              max={property.bedsAvailable}
-              value={bookingBeds}
-              onChange={(e) => setBookingBeds(Number(e.target.value))}
-              className="w-12 px-2 py-1 border border-gray-300 rounded text-center text-sm"
-            />
-            <button
-              onClick={handleSimulateBooking}
-              disabled={bookingBeds > property.bedsAvailable || property.bedsAvailable === 0}
-              className="flex-1 bg-orange-100 hover:bg-orange-200 disabled:bg-gray-100 disabled:text-gray-400 text-orange-700 font-medium py-2 px-3 rounded-md text-sm transition-colors duration-200"
-            >
-              Simulate Booking
-            </button>
-          </div>
         </div>
       </div>
 

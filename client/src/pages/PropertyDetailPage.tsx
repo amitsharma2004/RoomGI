@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import type { Property } from '../hooks';
 import { useAuth } from '../context/AuthContext';
+import { useViewingCount } from '../hooks';
 import { socketService } from '../lib/socket';
 import { NeighborhoodDNA, ReviewsSection, LiveIndicator, AnimatedCounter, PropertyDetailSkeleton } from '../components';
 import { PropertyDetailMiniMap } from '../components/PropertyDetailMiniMap';
@@ -19,10 +20,12 @@ export const PropertyDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'activity'>('overview');
-  const [viewerCount, setViewerCount] = useState(0);
   const [lastBookedTime, setLastBookedTime] = useState<string>('');
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [updatingAvailability, setUpdatingAvailability] = useState(false);
+
+  // Use the viewing count hook for real-time updates
+  const { viewingCount } = useViewingCount(id || '', 5000); // Poll every 5 seconds
 
   // Socket connection and cleanup
   useEffect(() => {
@@ -34,12 +37,6 @@ export const PropertyDetailPage: React.FC = () => {
     socketService.viewProperty(id);
 
     // Set up event listeners
-    socketService.onViewerCountUpdated((data) => {
-      if (data.propertyId === id) {
-        setViewerCount(data.count);
-      }
-    });
-
     socketService.onAvailabilityUpdated((data) => {
       if (data.propertyId === id) {
         setProperty(prev => prev ? { ...prev, bedsAvailable: data.bedsAvailable } : null);
@@ -82,7 +79,6 @@ export const PropertyDetailPage: React.FC = () => {
         setLoading(true);
         const response = await api.get(`/api/properties/${id}`);
         setProperty(response.data);
-        setViewerCount(response.data.viewingCount || 0);
       } catch (err) {
         setError('Failed to load property details');
         console.error('Error fetching property:', err);
@@ -339,14 +335,14 @@ export const PropertyDetailPage: React.FC = () => {
           </div>
         </div>
         
-        {viewerCount > 0 && (
+        {viewingCount > 0 && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
             <LiveIndicator 
-              count={viewerCount} 
+              count={viewingCount} 
               label="people viewing now" 
               variant="viewers"
             />
@@ -363,24 +359,60 @@ export const PropertyDetailPage: React.FC = () => {
           transition={{ delay: 0.3 }}
           className="lg:col-span-2"
         >
-          {/* Image Gallery (Mock) */}
+          {/* Image Gallery */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="bg-gray-200 rounded-lg h-64 mb-6 flex items-center justify-center"
+            className="mb-6"
           >
-            <div className="text-center text-gray-500">
-              <motion.div 
-                className="text-4xl mb-2"
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-              >
-                🏠
-              </motion.div>
-              <p>Property Images</p>
-              <p className="text-sm">(Gallery coming soon)</p>
-            </div>
+            {property.images && property.images.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {property.images.map((imageUrl, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * index }}
+                    className="relative group overflow-hidden rounded-lg border border-gray-200 bg-gray-100"
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`Property image ${index + 1}`}
+                      className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                      crossOrigin="anonymous"
+                      onLoad={(e) => {
+                        // Remove background when image loads successfully
+                        (e.target as HTMLImageElement).parentElement?.classList.remove('bg-gray-100');
+                        (e.target as HTMLImageElement).parentElement?.classList.add('bg-white');
+                      }}
+                      onError={(e) => {
+                        // Fallback for broken images
+                        const img = e.target as HTMLImageElement;
+                        img.src = 'https://via.placeholder.com/400x240/f3f4f6/9ca3af?text=Image+Not+Available';
+                        img.parentElement?.classList.add('bg-gray-100');
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <motion.div 
+                    className="text-4xl mb-2"
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  >
+                    🏠
+                  </motion.div>
+                  <p>No Images Available</p>
+                  <p className="text-sm">Owner hasn't uploaded images yet</p>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Neighborhood DNA Component */}

@@ -1,150 +1,235 @@
-# Rental Truth - Property Review Platform
+# RoomGI - Property Review Platform
 
-A hackathon project that brings transparency to rental properties through tenant reviews and deposit tracking.
+A modern property rental platform with transparent reviews and real-time features.
 
-## Features Implemented
+## Features
 
-### Level 1 - Core Features (Complete)
-- User Authentication - Email/password login with tenant/owner roles
-- Property Creation - Owners can add properties with location, rent, type
-
-### Level 2 - Differentiator (Complete)  
-- Tenant Reviews - Rate deposit return & reality (1-5 stars)
-- Deposit Honesty Score - Automatic calculation (Yes=100, Partial=50, No=0)
-- Property Stats - Real-time scoring and review aggregation
-
-### Level 3 - Wow Factor (Complete)
-- Scam & Red-Flag System - Report problematic properties
-- Warning Levels - Automatic risk assessment (2+ flags = warning, 5+ = danger)
+- 🏠 **Property Listings** - Browse and search rental properties
+- ⭐ **Verified Reviews** - Authentic reviews from real tenants
+- 💰 **Deposit Transparency** - See deposit return rates
+- 📍 **Location Mapping** - Interactive maps with property locations
+- 🔄 **Real-time Updates** - Live viewing counts and availability
+- 📱 **Responsive Design** - Works on all devices
+- 🔐 **Secure Authentication** - JWT-based user authentication
 
 ## Tech Stack
 
-- **Backend**: Node.js + TypeScript + Express
-- **Database**: PostgreSQL with migrations
-- **Authentication**: JWT tokens (ready for Firebase integration)
-- **Architecture**: Modular service-based design
+### Backend
+- **Node.js** with TypeScript
+- **Express.js** - Web framework
+- **PostgreSQL** - Database
+- **Socket.io** - Real-time communication
+- **Cloudinary** - Image storage
+- **JWT** - Authentication
 
-## Database Schema
+### Frontend
+- **React** with TypeScript
+- **Vite** - Build tool
+- **Tailwind CSS** - Styling
+- **Framer Motion** - Animations
+- **React Router** - Navigation
+- **Leaflet** - Maps
 
-```sql
-- users (id, email, role, password_hash)
-- properties (id, owner_id, location, rent, property_type, verified)
-- reviews (id, user_id, property_id, deposit_status, reality_rating, comment)
-- flags (id, user_id, property_id, reason, description)
-```
+## Quick Start with Docker
 
-## Quick Start
+### Prerequisites
+- Docker and Docker Compose installed
+- Git
 
-### 1. Setup Database
+### 1. Clone the Repository
 ```bash
-# Install PostgreSQL and create database
-createdb rental_truth
-
-# Run migrations and seed data
-npm run db:reset
+git clone <repository-url>
+cd roomgi
 ```
 
 ### 2. Environment Setup
-```bash
-# Update .env file
+Create a `.env` file in the root directory:
+```env
+# Database
+DATABASE_URL=postgres://postgres:postgres123@localhost:5432/roomgi
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=rental_truth
-DB_USER=your_user
-DB_PASSWORD=your_password
+DB_USER=postgres
+DB_PASSWORD=postgres123
+DB_NAME=roomgi
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
+
+# Server
+PORT=3001
+NODE_ENV=production
+
+# Cloudinary (Optional - for image uploads)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-### 3. Start Development
+### 3. Production Deployment
 ```bash
-npm install
-npm run dev
-# Server runs on http://localhost:3000
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
+
+### 4. Development Mode
+```bash
+# Start development environment
+docker-compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Stop development services
+docker-compose -f docker-compose.dev.yml down
+```
+
+## Manual Setup (Without Docker)
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 12+
+- npm or yarn
+
+### Backend Setup
+```bash
+# Install dependencies
+npm install
+
+# Set up environment variables (create .env file)
+cp .env.example .env
+
+# Run database migrations
+npm run db:migrate
+
+# Seed database (optional)
+npm run db:seed
+
+# Start development server
+npm run dev
+```
+
+### Frontend Setup
+```bash
+cd client
+
+# Install dependencies
+npm install
+
+# Create environment file
+echo "VITE_API_URL=http://localhost:3001" > .env
+
+# Start development server
+npm run dev
+```
+
+## Docker Services
+
+### Production (`docker-compose.yml`)
+- **database**: PostgreSQL 15 with persistent data
+- **backend**: Node.js API server (port 3001)
+- **frontend**: Nginx serving React app (port 80)
+
+### Development (`docker-compose.dev.yml`)
+- **database**: PostgreSQL 15 with persistent data
+- **backend**: Node.js with hot reload (port 3001)
+- **frontend**: Vite dev server with hot reload (port 5173)
 
 ## API Endpoints
 
 ### Authentication
-```bash
-POST /api/auth/register - Register user
-POST /api/auth/login    - Login user
-```
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
 
-### Properties  
-```bash
-GET  /api/properties           - Search properties
-GET  /api/properties/:id       - Get property with stats
-POST /api/properties           - Create property (owners only)
-GET  /api/properties/my        - Get my properties (owners only)
-```
+### Properties
+- `GET /api/properties` - List all properties
+- `POST /api/properties` - Create property (owners only)
+- `GET /api/properties/:id` - Get property details
+- `PATCH /api/properties/:id/availability` - Update availability
 
 ### Reviews
+- `GET /api/reviews/property/:id` - Get property reviews
+- `POST /api/reviews` - Create review
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | - |
+| `JWT_SECRET` | JWT signing secret | - |
+| `PORT` | Backend server port | 3001 |
+| `NODE_ENV` | Environment mode | development |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | - |
+| `CLOUDINARY_API_KEY` | Cloudinary API key | - |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret | - |
+
+## Database Schema
+
+The application uses PostgreSQL with the following main tables:
+- `users` - User accounts (tenants and owners)
+- `properties` - Property listings
+- `reviews` - Property reviews and ratings
+- `flags` - Property flags/reports
+- `bookings` - Booking requests
+
+## Development
+
+### Database Commands
 ```bash
-POST /api/reviews                    - Submit review (tenants only)
-GET  /api/reviews/property/:id       - Get property reviews
-GET  /api/reviews/property/:id/scores - Get deposit & reality scores
-GET  /api/reviews/my                 - Get my reviews
+# Test database connection
+npm run db:test
+
+# Run migrations
+npm run db:migrate
+
+# Seed database
+npm run db:seed
+
+# Reset database
+npm run db:reset
 ```
 
-### Flags (Red Flag System)
+### Docker Commands
 ```bash
-POST /api/flags                 - Report property issue
-GET  /api/flags/property/:id    - Get property flag status
-GET  /api/flags/reasons         - Get available flag reasons
+# Build images
+docker-compose build
+
+# View container logs
+docker-compose logs [service-name]
+
+# Execute commands in container
+docker-compose exec backend npm run db:migrate
+docker-compose exec database psql -U postgres -d roomgi
+
+# Remove all containers and volumes
+docker-compose down -v
 ```
 
-## Example Usage
+## Health Checks
 
-### 1. Register as Tenant
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"tenant@example.com","password":"password","role":"tenant"}'
-```
+All services include health checks:
+- **Backend**: `GET /health` - Database connectivity
+- **Frontend**: HTTP 200 response
+- **Database**: PostgreSQL ready check
 
-### 2. Submit Property Review
-```bash
-curl -X POST http://localhost:3000/api/reviews \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"propertyId":"PROPERTY_ID","depositStatus":"yes","realityRating":5,"comment":"Great landlord!"}'
-```
+## Production Considerations
 
-### 3. Flag Problematic Property
-```bash
-curl -X POST http://localhost:3000/api/flags \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"propertyId":"PROPERTY_ID","reason":"deposit_scam","description":"Landlord kept deposit unfairly"}'
-```
+1. **Environment Variables**: Use secure values for JWT_SECRET
+2. **Database**: Use managed PostgreSQL service
+3. **Images**: Configure Cloudinary for image storage
+4. **SSL**: Use reverse proxy (nginx/traefik) for HTTPS
+5. **Monitoring**: Add logging and monitoring solutions
 
-## Hackathon Implementation Status
+## Contributing
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| User Auth | Complete | Level 1 |
-| Property CRUD | Complete | Level 1 |
-| Review System | Complete | Level 2 |
-| Deposit Scoring | Complete | Level 2 |
-| Flag System | Complete | Level 3 |
-| Database Integration | Complete | Core |
-| API Documentation | Complete | Core |
-
-## Next Steps (If Time Permits)
-
-1. **Frontend UI** - React/Next.js Property History Cards
-2. **Admin Verification** - Property verification badge system  
-3. **Firebase Auth** - Replace JWT with Firebase Authentication
-4. **Real-time Updates** - WebSocket notifications for new reviews/flags
-5. **Advanced Search** - Filters, sorting, map integration
-
-## Deployment Ready
-
-The API is production-ready with:
-- TypeScript for type safety
-- PostgreSQL for data persistence  
-- Modular architecture for scalability
-- Error handling and validation
-- Database migrations and seeding
-- Comprehensive API documentation
-
-Perfect for demo and further development!
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test with Docker
+5. Submit a pull request
