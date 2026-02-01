@@ -20,6 +20,7 @@
   "type": "module",
   "dependencies": {
     "@types/multer": "^2.0.0",
+    "bcrypt": "^5.1.1",
     "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -32,6 +33,7 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

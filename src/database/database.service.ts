@@ -8,30 +8,40 @@ import { logger } from '../utils/logger.js';
 export class DatabaseService {
   // User operations
   async createUser(userData: RegisterDto): Promise<User> {
-    try {
-      const query = `
-        INSERT INTO users (email, password_hash, role)
-        VALUES ($1, $2, $3)
-        RETURNING id, email, role, created_at, updated_at
-      `;
-      
-      const result = await pool.query(query, [
-        userData.email,
-        userData.password, // In production, hash this!
-        userData.role
-      ]);
-      
-      return result.rows[0];
-    } catch (error: any) {
-      logger.error('Database error in createUser:', error);
-      throw error; // Re-throw to preserve the original error
-    }
+    const query = `
+      INSERT INTO users (email, password_hash, role)
+      VALUES ($1, $2, $3)
+      RETURNING id, email, role, created_at, updated_at
+    `;
+    
+    const result = await pool.query(query, [
+      userData.email,
+      userData.password, // This is now a hashed password
+      userData.role
+    ]);
+    
+    return result.rows[0];
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
     const query = 'SELECT id, email, role, created_at, updated_at FROM users WHERE email = $1';
     const result = await pool.query(query, [email]);
     return result.rows[0] || null;
+  }
+
+  async getUserByEmailWithPassword(email: string): Promise<(User & { passwordHash: string }) | null> {
+    const query = 'SELECT id, email, password_hash, role, created_at, updated_at FROM users WHERE email = $1';
+    const result = await pool.query(query, [email]);
+    if (!result.rows[0]) return null;
+    
+    return {
+      id: result.rows[0].id,
+      email: result.rows[0].email,
+      role: result.rows[0].role,
+      createdAt: result.rows[0].created_at,
+      updatedAt: result.rows[0].updated_at,
+      passwordHash: result.rows[0].password_hash
+    };
   }
 
   async getUserById(id: string): Promise<User | null> {

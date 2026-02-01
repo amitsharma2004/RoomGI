@@ -44,8 +44,10 @@ export class AuthController {
       }
 
       const result = await this.authService.login({ email, password });
+      logger.info(`User logged in successfully: ${email}`);
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('Login attempt failed:', { email: req.body?.email, error: error.message });
       res.status(401).json({ error: 'Invalid credentials' });
     }
   }
