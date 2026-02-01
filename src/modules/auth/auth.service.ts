@@ -6,7 +6,7 @@ const db = new DatabaseService();
 
 export class AuthService {
   async register(userData: RegisterDto): Promise<AuthResponse> {
-    logger.info ('registering the user...');
+    logger.info('registering the user...');
     try {
       // Check if user already exists
       const existingUser = await db.getUserByEmail(userData.email);
@@ -14,13 +14,14 @@ export class AuthService {
         throw new Error('User already exists');
       }
       // Create user (in production, hash the password!)
-      logger.info ('dert');
+      logger.info('creating user in database...');
       const user = await db.createUser(userData);
       const token = `token_${user.id}_${Date.now()}`;
       
       return { user, token };
     } catch (error) {
-      throw new Error('Registration failed');
+      logger.error('Registration error:', error);
+      throw error; // Re-throw the original error instead of creating a generic one
     }
   }
 

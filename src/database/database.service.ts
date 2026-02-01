@@ -8,19 +8,24 @@ import { logger } from '../utils/logger.js';
 export class DatabaseService {
   // User operations
   async createUser(userData: RegisterDto): Promise<User> {
-    const query = `
-      INSERT INTO users (email, password_hash, role)
-      VALUES ($1, $2, $3)
-      RETURNING id, email, role, created_at, updated_at
-    `;
-    
-    const result = await pool.query(query, [
-      userData.email,
-      userData.password, // In production, hash this!
-      userData.role
-    ]);
-    
-    return result.rows[0];
+    try {
+      const query = `
+        INSERT INTO users (email, password_hash, role)
+        VALUES ($1, $2, $3)
+        RETURNING id, email, role, created_at, updated_at
+      `;
+      
+      const result = await pool.query(query, [
+        userData.email,
+        userData.password, // In production, hash this!
+        userData.role
+      ]);
+      
+      return result.rows[0];
+    } catch (error: any) {
+      logger.error('Database error in createUser:', error);
+      throw error; // Re-throw to preserve the original error
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | null> {

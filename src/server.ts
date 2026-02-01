@@ -19,9 +19,15 @@ socketService.initialize(server);
 pool.connect()
     .then(() => {
         logger.info('Connected to PostgreSQL database');
+        // Test a simple query to ensure tables exist
+        return pool.query('SELECT COUNT(*) FROM users');
+    })
+    .then(() => {
+        logger.info('Database tables verified');
     })
     .catch(err => {
-        logger.error('Database connection error:', err);
+        logger.error('Database connection or table error:', err);
+        logger.error('Make sure to run migrations: npm run db:migrate');
     });
 
 app.use(cors({
@@ -38,7 +44,7 @@ app.use('/api', routes);
 // Basic route
 app.get('/', (_req, res) => {
   res.json({ 
-    message: 'Rental Truth API - Property Review Platform',
+    message: 'RoomGI API - Property Review Platform',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -51,6 +57,47 @@ app.get('/', (_req, res) => {
       viewers: 'Real-time property viewing'
     }
   });
+});
+
+// Health check endpoint for Docker
+app.get('/health', async (_req, res) => {
+  try {
+    // Check database connection
+    await pool.query('SELECT 1');
+    res.status(200).json({ 
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+      uptime: process.uptime()
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Migration endpoint (remove after first deployment)
+app.post('/migrate', async (_req, res) => {
+  try {
+    const { runMigrations, seedDatabase } = await import('./database/migrate.js');
+    const migrateSuccess = await runMigrations();
+    const seedSuccess = await seedDatabase();
+    
+    res.json({ 
+      success: migrateSuccess && seedSuccess,
+      migrations: migrateSuccess,
+      seeding: seedSuccess
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Error handling middleware
