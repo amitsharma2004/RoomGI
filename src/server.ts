@@ -1,6 +1,11 @@
 import express from 'express';
 import { createServer } from 'http';
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
+
+// Load environment variables first
+dotenv.config();
+
 import { config } from './config/index.js';
 import { logger } from './utils/index.js';
 import { errorHandler } from './middleware/index.js';
@@ -8,6 +13,9 @@ import routes from './routes/index.js';
 import pool from './config/database.js';
 import cors from 'cors';
 import { socketService } from './socket/socketService.js';
+
+// Import Cloudinary config after dotenv
+import './config/cloudinary.js';
 
 const app = express();
 const server = createServer(app);

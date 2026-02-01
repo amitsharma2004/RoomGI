@@ -77,6 +77,7 @@ export const PropertyDetailPage: React.FC = () => {
       
       try {
         setLoading(true);
+        console.log(`Fetching property data for ID: ${id}`);
         const response = await api.get(`/api/properties/${id}`);
         setProperty(response.data);
       } catch (err) {
@@ -294,20 +295,20 @@ export const PropertyDetailPage: React.FC = () => {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 gap-4"
+        className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-6 lg:mb-8 gap-4"
       >
-        <div>
+        <div className="flex-1">
           <motion.h1 
-            className="text-3xl font-bold text-gray-900 mb-2"
+            className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2"
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
             {property.location}
           </motion.h1>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <motion.span 
-              className="text-2xl font-bold text-blue-600"
+              className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.3, type: "spring" }}
@@ -315,7 +316,7 @@ export const PropertyDetailPage: React.FC = () => {
               ₹<AnimatedCounter value={property.rent} />/month
             </motion.span>
             <motion.span 
-              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize"
+              className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm capitalize"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
@@ -324,7 +325,7 @@ export const PropertyDetailPage: React.FC = () => {
             </motion.span>
             {property.verified && (
               <motion.span 
-                className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"
+                className="px-2 sm:px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs sm:text-sm font-medium"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5, type: "spring" }}
@@ -340,6 +341,7 @@ export const PropertyDetailPage: React.FC = () => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.6 }}
+            className="flex-shrink-0"
           >
             <LiveIndicator 
               count={viewingCount} 
@@ -351,13 +353,13 @@ export const PropertyDetailPage: React.FC = () => {
       </motion.div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
         {/* Left Column - Property Details */}
         <motion.div
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="lg:col-span-2"
+          className="xl:col-span-2 space-y-6"
         >
           {/* Image Gallery */}
           <motion.div
@@ -366,51 +368,66 @@ export const PropertyDetailPage: React.FC = () => {
             transition={{ delay: 0.4 }}
             className="mb-6"
           >
-            {property.images && property.images.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {property.images.map((imageUrl, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 * index }}
-                    className="relative group overflow-hidden rounded-lg border border-gray-200 bg-gray-100"
-                  >
-                    <img
-                      src={imageUrl}
-                      alt={`Property image ${index + 1}`}
-                      className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
-                      crossOrigin="anonymous"
-                      onLoad={(e) => {
-                        // Remove background when image loads successfully
-                        (e.target as HTMLImageElement).parentElement?.classList.remove('bg-gray-100');
-                        (e.target as HTMLImageElement).parentElement?.classList.add('bg-white');
-                      }}
-                      onError={(e) => {
-                        // Fallback for broken images
-                        const img = e.target as HTMLImageElement;
-                        img.src = 'https://via.placeholder.com/400x240/f3f4f6/9ca3af?text=Image+Not+Available';
-                        img.parentElement?.classList.add('bg-gray-100');
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
-                  </motion.div>
-                ))}
+            {/* Debug: Show what we're getting from the API */}
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-xs sm:text-sm">
+              <strong>Debug - Images Data:</strong><br/>
+              Type: {typeof property.images}<br/>
+              Is Array: {Array.isArray(property.images) ? 'Yes' : 'No'}<br/>
+              Length: {property.images?.length || 0}<br/>
+              <div className="mt-2 break-all">
+                Raw Data: {JSON.stringify(property.images)}
+              </div>
+            </div>
+
+            {/* Responsive image display logic */}
+            {property.images && Array.isArray(property.images) && property.images.length > 0 ? (
+              <div className="space-y-4">
+                <h3 className="text-lg sm:text-xl font-semibold">
+                  Property Images ({property.images.length})
+                </h3>
+                
+                {/* Mobile: Single column, Tablet: 2 columns, Desktop: 3 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                  {property.images.map((imageUrl, index) => {
+                    console.log(`Rendering image ${index}:`, imageUrl);
+                    return (
+                      <div 
+                        key={index} 
+                        className="bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Property ${index + 1}`}
+                          className="w-full h-40 sm:h-48 lg:h-52 object-cover hover:scale-105 transition-transform duration-300"
+                          onLoad={() => console.log(`Image ${index} loaded successfully`)}
+                          onError={(e) => {
+                            console.error(`Image ${index} failed to load:`, imageUrl);
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="hidden w-full h-40 sm:h-48 lg:h-52 flex items-center justify-center bg-gray-200 text-gray-500">
+                          <div className="text-center p-4">
+                            <div className="text-xl sm:text-2xl mb-2">🖼️</div>
+                            <div className="text-xs sm:text-sm font-medium">Image failed to load</div>
+                            <div className="text-xs mt-1 break-all opacity-75">{imageUrl}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
-              <div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <motion.div 
-                    className="text-4xl mb-2"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                  >
-                    🏠
-                  </motion.div>
-                  <p>No Images Available</p>
-                  <p className="text-sm">Owner hasn't uploaded images yet</p>
-                </div>
+              <div className="bg-gray-100 rounded-lg p-6 sm:p-8 text-center">
+                <div className="text-3xl sm:text-4xl mb-4">🏠</div>
+                <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-2">
+                  No Images Available
+                </h3>
+                <p className="text-sm sm:text-base text-gray-500">
+                  This property doesn't have any images yet.
+                </p>
               </div>
             )}
           </motion.div>
@@ -422,10 +439,10 @@ export const PropertyDetailPage: React.FC = () => {
 
           {/* Tabs */}
           <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === 'overview'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -435,7 +452,7 @@ export const PropertyDetailPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === 'reviews'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -445,7 +462,7 @@ export const PropertyDetailPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('activity')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === 'activity'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -569,14 +586,14 @@ export const PropertyDetailPage: React.FC = () => {
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="space-y-6"
+          className="space-y-4 sm:space-y-6"
         >
           {/* Availability Card */}
           <motion.div
             whileHover={{ y: -5 }}
-            className="bg-white rounded-lg shadow-md p-6"
+            className="bg-white rounded-lg shadow-md p-4 sm:p-6"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Availability</h3>
             
             {/* Beds Available */}
             <div className="mb-4">
@@ -703,7 +720,7 @@ export const PropertyDetailPage: React.FC = () => {
           </motion.div>
 
           {/* Action Buttons */}
-          <div className="space-y-3">
+          <div className="space-y-3 sm:space-y-4">
             {/* Only show Contact Owner and Book Now buttons if user is not the owner */}
             {user?.id !== property.ownerId && (
               <>
@@ -711,7 +728,7 @@ export const PropertyDetailPage: React.FC = () => {
                   onClick={() => handleContactOwner()}
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 sm:py-3 px-4 rounded-md transition-colors duration-200 text-sm sm:text-base"
                 >
                   Contact Owner
                 </motion.button>
@@ -719,7 +736,7 @@ export const PropertyDetailPage: React.FC = () => {
                   onClick={() => handleBookNow()}
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 sm:py-3 px-4 rounded-md transition-colors duration-200 text-sm sm:text-base"
                 >
                   Book Now
                 </motion.button>
@@ -728,9 +745,9 @@ export const PropertyDetailPage: React.FC = () => {
             
             {/* Show owner message if user is the owner */}
             {user?.id === property.ownerId && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                <div className="text-blue-800 font-medium mb-1">This is your property</div>
-                <div className="text-blue-600 text-sm">You can manage availability above</div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 text-center">
+                <div className="text-blue-800 font-medium mb-1 text-sm sm:text-base">This is your property</div>
+                <div className="text-blue-600 text-xs sm:text-sm">You can manage availability above</div>
               </div>
             )}
             
@@ -740,7 +757,7 @@ export const PropertyDetailPage: React.FC = () => {
                 onClick={() => handleWriteReview()}
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-4 rounded-md transition-colors duration-200"
+                className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 sm:py-3 px-4 rounded-md transition-colors duration-200 text-sm sm:text-base"
               >
                 Write Review
               </motion.button>

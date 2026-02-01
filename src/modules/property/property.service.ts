@@ -34,13 +34,15 @@ export class PropertyService {
       db.getReviewsByProperty(id)
     ]);
 
-    return {
+    const result = {
       ...property,
       depositScore,
       realityScore,
       flagCount,
       reviewCount: reviews.length
     };
+
+    return result;
   }
 
   async searchProperties(location?: string, maxRent?: number): Promise<PropertyWithStats[]> {

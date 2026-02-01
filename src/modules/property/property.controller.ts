@@ -78,6 +78,8 @@ export class PropertyController {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       
+      console.log(`=== BACKEND: Getting property ${id} ===`);
+      
       // Get real-time viewer count from socket service
       const viewingCount = socketService.getViewerCount(id);
       
@@ -86,13 +88,14 @@ export class PropertyController {
       if (!property) {
         return res.status(404).json({ error: 'Property not found' });
       }
-      
       // Add real-time viewing count
-      res.json({
+      const result = {
         ...property,
         viewingCount
-      });
+      };
+      res.json(result);
     } catch (error) {
+      console.error('Get property error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -210,7 +213,6 @@ export class PropertyController {
     }
   }
 
-  // Test endpoint to verify Cloudinary configuration
   async testCloudinary(req: Request, res: Response) {
     try {
       const { cloudinary } = await import('../../config/cloudinary.js');
@@ -227,6 +229,62 @@ export class PropertyController {
       console.error('Cloudinary test error:', error);
       res.status(500).json({ 
         error: 'Cloudinary connection failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  // Debug endpoint to check raw database data
+  async debugProperty(req: Request, res: Response) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      
+      // Get raw data from database
+      const query = `
+        SELECT id, owner_id, location, rent, property_type, beds_available, total_beds,
+               images, latitude, longitude,
+               nightlife_score, transit_score, safety_score, quietness_score, food_score, student_friendly_score,
+               verified, created_at, updated_at
+        FROM properties WHERE id = $1
+      `;
+      
+      const result = await pool.query(query, [id]);
+      
+      if (!result.rows[0]) {
+        return res.status(404).json({ error: 'Property not found' });
+      }
+      
+      const rawData = result.rows[0];
+      
+      // Also get the processed data
+      const processedProperty = await this.propertyService.getPropertyById(id);
+      const statsProperty = await this.propertyService.getPropertyWithStats(id);
+      
+      res.json({
+        message: 'Debug data comparison',
+        rawData: {
+          images: rawData.images,
+          imagesType: typeof rawData.images,
+          isArray: Array.isArray(rawData.images),
+          imagesLength: rawData.images?.length
+        },
+        processedProperty: {
+          images: processedProperty?.images,
+          imagesType: typeof processedProperty?.images,
+          isArray: Array.isArray(processedProperty?.images),
+          imagesLength: processedProperty?.images?.length
+        },
+        statsProperty: {
+          images: statsProperty?.images,
+          imagesType: typeof statsProperty?.images,
+          isArray: Array.isArray(statsProperty?.images),
+          imagesLength: statsProperty?.images?.length
+        }
+      });
+    } catch (error) {
+      console.error('Debug property error:', error);
+      res.status(500).json({ 
+        error: 'Debug failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }

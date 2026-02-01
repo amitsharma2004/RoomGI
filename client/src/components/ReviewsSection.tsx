@@ -79,6 +79,15 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ propertyId }) =>
 
   const canAddReview = user?.role === 'tenant' && !userHasReviewed;
 
+  // Debug logging
+  console.log('ReviewsSection Debug:', {
+    user: user,
+    userRole: user?.role,
+    userHasReviewed,
+    canAddReview,
+    showAddReview
+  });
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -174,32 +183,65 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ propertyId }) =>
       )}
 
       {/* Add Review Section */}
-      {canAddReview && (
+      {user ? (
         <div>
-          {!showAddReview ? (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-blue-900">Share Your Experience</h3>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Help future tenants by reviewing this property
-                  </p>
+          {canAddReview ? (
+            <>
+              {!showAddReview ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium text-blue-900">Share Your Experience</h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Help future tenants by reviewing this property
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowAddReview(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                    >
+                      Write Review
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setShowAddReview(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-                >
-                  Write Review
-                </button>
+              ) : (
+                <AddReviewForm
+                  propertyId={propertyId}
+                  onReviewSubmitted={handleReviewSubmitted}
+                  onCancel={() => setShowAddReview(false)}
+                />
+              )}
+            </>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="text-center">
+                <h3 className="font-medium text-gray-900 mb-2">Cannot Write Review</h3>
+                <p className="text-sm text-gray-600">
+                  {user.role !== 'tenant' 
+                    ? 'Only tenants can write reviews' 
+                    : userHasReviewed 
+                    ? 'You have already reviewed this property'
+                    : 'Unable to write review at this time'
+                  }
+                </p>
               </div>
             </div>
-          ) : (
-            <AddReviewForm
-              propertyId={propertyId}
-              onReviewSubmitted={handleReviewSubmitted}
-              onCancel={() => setShowAddReview(false)}
-            />
           )}
+        </div>
+      ) : (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="text-center">
+            <h3 className="font-medium text-gray-900 mb-2">Login Required</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Please log in to write a review
+            </p>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md"
+            >
+              Login
+            </button>
+          </div>
         </div>
       )}
 

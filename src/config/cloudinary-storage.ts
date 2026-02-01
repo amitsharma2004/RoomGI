@@ -1,10 +1,19 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Request } from 'express';
 import multer from 'multer';
+import dotenv from 'dotenv';
+
+// Ensure environment variables are loaded
+dotenv.config();
 
 // Custom Cloudinary storage for multer
 class CloudinaryStorage {
-  constructor(private options: { folder?: string; allowedFormats?: string[] }) {}
+  constructor(private options: { folder?: string; allowedFormats?: string[] }) {
+    // Validate Cloudinary configuration on initialization
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      throw new Error('Cloudinary configuration missing. Please check your environment variables.');
+    }
+  }
 
   _handleFile(req: Request, file: Express.Multer.File, cb: (error: any, info?: any) => void) {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -17,6 +26,7 @@ class CloudinaryStorage {
       },
       (error, result) => {
         if (error) {
+          console.error('Cloudinary upload error:', error);
           cb(error);
         } else {
           cb(null, {

@@ -51,16 +51,34 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
     >
       {/* Property Image */}
       {property.images && property.images.length > 0 && (
-        <div className="relative h-48 overflow-hidden rounded-t-lg">
+        <div className="relative h-48 overflow-hidden rounded-t-lg bg-gray-100">
           <img
             src={property.images[0]}
             alt={`${property.location} property`}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             loading="lazy"
-            crossOrigin="anonymous"
+            onLoad={(e) => {
+              // Remove background when image loads successfully
+              const container = (e.target as HTMLImageElement).parentElement;
+              if (container) {
+                container.classList.remove('bg-gray-100');
+                container.classList.add('bg-white');
+              }
+            }}
             onError={(e) => {
-              // Hide image container if image fails to load
-              (e.target as HTMLImageElement).parentElement?.classList.add('hidden');
+              // Replace with placeholder on error
+              const img = e.target as HTMLImageElement;
+              const container = img.parentElement;
+              if (container) {
+                container.innerHTML = `
+                  <div class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-100">
+                    <svg class="w-16 h-16 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm">Image unavailable</span>
+                  </div>
+                `;
+              }
             }}
           />
           {property.verified && (

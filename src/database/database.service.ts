@@ -262,7 +262,25 @@ export class DatabaseService {
   }
 
   private mapPropertyFromDb(row: any): Property {
-    const images = Array.isArray(row.images) ? row.images : [];
+    let images: string[] = [];
+    
+    // Handle different possible formats of images data
+    if (row.images) {
+      if (Array.isArray(row.images)) {
+        images = row.images.filter(img => img && typeof img === 'string');
+      } else if (typeof row.images === 'string') {
+        try {
+          // Try to parse as JSON array
+          const parsed = JSON.parse(row.images);
+          if (Array.isArray(parsed)) {
+            images = parsed.filter(img => img && typeof img === 'string');
+          }
+        } catch {
+          // If not JSON, treat as single image URL
+          images = [row.images];
+        }
+      }
+    }
     
     return {
       id: row.id,
@@ -272,7 +290,7 @@ export class DatabaseService {
       propertyType: row.property_type,
       bedsAvailable: row.beds_available,
       totalBeds: row.total_beds,
-      images: images, // Handle PostgreSQL array
+      images: images, // Use processed images
       latitude: row.latitude ? parseFloat(row.latitude) : undefined,
       longitude: row.longitude ? parseFloat(row.longitude) : undefined,
       nightlifeScore: row.nightlife_score,
