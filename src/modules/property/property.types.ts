@@ -7,6 +7,7 @@ export interface Property {
   bedsAvailable: number;
   totalBeds: number;
   verified: boolean;
+  images: string[]; // Array of image URLs
   latitude?: number;
   longitude?: number;
   nightlifeScore: number;
@@ -25,6 +26,7 @@ export interface CreatePropertyDto {
   propertyType: 'apartment' | 'house' | 'condo' | 'studio';
   bedsAvailable?: number;
   totalBeds?: number;
+  images?: string[]; // Array of image URLs from Cloudinary
   latitude?: number;
   longitude?: number;
   nightlifeScore?: number;

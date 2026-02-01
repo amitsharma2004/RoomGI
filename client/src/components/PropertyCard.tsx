@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LiveIndicator, AnimatedCounter } from './';
+import { AnimatedCounter, ViewingCountBadge } from './';
 import type { Property } from '../hooks';
-import api from '../lib/axios';
 
 interface PropertyCardProps {
   property: Property;
@@ -11,22 +10,6 @@ interface PropertyCardProps {
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const navigate = useNavigate();
-  const [viewingCount, setViewingCount] = useState(property.viewingCount || 0);
-
-  // Poll for viewing count updates every 10 seconds
-  useEffect(() => {
-    const pollViewingCount = async () => {
-      try {
-        const response = await api.get(`/api/properties/${property.id}/viewing-count`);
-        setViewingCount(response.data.viewingCount);
-      } catch (error) {
-        console.error('Failed to fetch viewing count:', error);
-      }
-    };
-
-    const interval = setInterval(pollViewingCount, 10000);
-    return () => clearInterval(interval);
-  }, [property.id]);
 
   const handleViewDetails = () => {
     navigate(`/property/${property.id}`);
@@ -66,6 +49,30 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
       transition={{ duration: 0.2 }}
       className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200"
     >
+      {/* Property Image */}
+      {property.images && property.images.length > 0 && (
+        <div className="relative h-48 overflow-hidden rounded-t-lg">
+          <img
+            src={property.images[0]}
+            alt={`${property.location} property`}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            loading="lazy"
+            crossOrigin="anonymous"
+            onError={(e) => {
+              // Hide image container if image fails to load
+              (e.target as HTMLImageElement).parentElement?.classList.add('hidden');
+            }}
+          />
+          {property.verified && (
+            <div className="absolute top-2 right-2">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 bg-opacity-90">
+                ✓ Verified
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="p-6">
         {/* Header with location and verification */}
         <div className="flex justify-between items-start mb-3">
@@ -76,7 +83,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             {property.location}
           </motion.h3>
           <div className="flex items-center gap-2 ml-2">
-            {property.verified && (
+            {!property.images?.length && property.verified && (
               <motion.span 
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -153,13 +160,11 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           <span>
             <AnimatedCounter value={property.reviewCount || 0} /> review{(property.reviewCount || 0) !== 1 ? 's' : ''}
           </span>
-          {viewingCount > 0 && (
-            <LiveIndicator 
-              count={viewingCount} 
-              label="viewing now" 
-              variant="viewers"
-            />
-          )}
+          <ViewingCountBadge 
+            propertyId={property.id} 
+            variant="compact"
+            pollInterval={10000}
+          />
         </div>
 
         {/* View Details Button */}

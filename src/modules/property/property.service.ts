@@ -65,35 +65,7 @@ export class PropertyService {
     return await db.getPropertyActivity(propertyId);
   }
 
-  async generateMockActivity(propertyId: string): Promise<ActivityItem[]> {
-    const mockActivities = [
-      'New inquiry received from potential tenant',
-      'Property viewed 15 times in the last hour',
-      'Tenant requested virtual tour',
-      'Property added to 3 wishlists',
-      'Rent comparison requested',
-      'Neighborhood safety inquiry received'
-    ];
 
-    const activities: ActivityItem[] = [];
-    const activityCount = Math.floor(Math.random() * 4) + 2; // 2-5 activities
-
-    for (let i = 0; i < activityCount; i++) {
-      const activity: ActivityItem = {
-        id: `mock-${Date.now()}-${i}`,
-        propertyId,
-        type: 'view',
-        message: mockActivities[Math.floor(Math.random() * mockActivities.length)],
-        timestamp: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString()
-      };
-      activities.push(activity);
-      
-      // Log the activity
-      await this.logActivity(propertyId, activity.type, activity.message);
-    }
-
-    return activities;
-  }
 
   private async enrichPropertiesWithStats(properties: Property[]): Promise<PropertyWithStats[]> {
     const enrichedProperties = await Promise.all(

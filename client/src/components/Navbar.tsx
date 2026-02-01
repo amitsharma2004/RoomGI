@@ -21,7 +21,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-bold text-gray-800">
-              Rental Truth
+              RoomGI
             </Link>
             <div className="flex space-x-4">
               <Link

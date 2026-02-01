@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/axios';
 
 export interface Property {
@@ -39,12 +39,12 @@ export interface LifestyleFilters {
   studentFriendly?: 'low' | 'medium' | 'high';
 }
 
-export function useProperties(filters?: LifestyleFilters) {
+export function useProperties(initialFilters?: LifestyleFilters) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProperties = async (searchFilters?: LifestyleFilters) => {
+  const fetchProperties = useCallback(async (searchFilters?: LifestyleFilters) => {
     try {
       setLoading(true);
       setError(null);
@@ -81,15 +81,15 @@ export function useProperties(filters?: LifestyleFilters) {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProperties(filters);
   }, []);
 
-  const refetch = (newFilters?: LifestyleFilters) => {
+  useEffect(() => {
+    fetchProperties(initialFilters);
+  }, [fetchProperties]); // Only run once on mount
+
+  const refetch = useCallback((newFilters?: LifestyleFilters) => {
     fetchProperties(newFilters);
-  };
+  }, [fetchProperties]);
 
   return {
     properties,

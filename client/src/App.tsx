@@ -4,7 +4,6 @@ import { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute, Layout, ErrorBoundary, AddPropertyForm } from './components';
-import { DemoBanner } from './components/DemoBanner';
 import { LoginPage, RegisterPage, HomePage, PropertiesPage, PropertiesMapPage, PropertyDetailPage, OwnerDashboard, NotFoundPage } from './pages';
 
 const AppRoutes: React.FC = () => {
@@ -166,7 +165,6 @@ function App() {
       <AuthProvider>
         <Router>
           <div className="h-screen w-full bg-gray-50">
-            <DemoBanner />
             <AppRoutes />
             <Toaster
               position="top-right"
