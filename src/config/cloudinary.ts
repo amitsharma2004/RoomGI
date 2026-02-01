@@ -14,13 +14,18 @@ const cloudinaryConfig = {
 
 // Validate configuration
 if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
-  console.error('Missing Cloudinary configuration:');
-  console.error('CLOUDINARY_CLOUD_NAME:', cloudinaryConfig.cloud_name ? '✓' : '✗');
-  console.error('CLOUDINARY_API_KEY:', cloudinaryConfig.api_key ? '✓' : '✗');
-  console.error('CLOUDINARY_API_SECRET:', cloudinaryConfig.api_secret ? '✓' : '✗');
-  throw new Error('Cloudinary configuration is incomplete. Please check your environment variables.');
+  console.warn('⚠️  Missing Cloudinary configuration:');
+  console.warn('CLOUDINARY_CLOUD_NAME:', cloudinaryConfig.cloud_name ? '✓' : '✗');
+  console.warn('CLOUDINARY_API_KEY:', cloudinaryConfig.api_key ? '✓' : '✗');
+  console.warn('CLOUDINARY_API_SECRET:', cloudinaryConfig.api_secret ? '✓' : '✗');
+  console.warn('⚠️  Image uploads will not work until Cloudinary is configured.');
+} else {
+  try {
+    cloudinary.config(cloudinaryConfig);
+    console.log('✅ Cloudinary configured successfully');
+  } catch (error) {
+    console.error('❌ Failed to configure Cloudinary:', error);
+  }
 }
-
-cloudinary.config(cloudinaryConfig);
 
 export { cloudinary };

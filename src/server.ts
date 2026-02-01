@@ -14,11 +14,19 @@ import pool from './config/database.js';
 import cors from 'cors';
 import { socketService } from './socket/socketService.js';
 
-// Import Cloudinary config after dotenv
-import './config/cloudinary.js';
-
 const app = express();
 const server = createServer(app);
+
+// Global error handlers to prevent crashes
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  logger.error('Server will continue running...');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Server will continue running...');
+});
 
 // Initialize Socket.io
 socketService.initialize(server);
@@ -34,8 +42,9 @@ pool.connect()
         logger.info('Database tables verified');
     })
     .catch(err => {
-        logger.error('Database connection or table error:', err);
-        logger.error('Make sure to run migrations: npm run db:migrate');
+        logger.warn('Database connection or table error:', err.message);
+        logger.warn('Make sure to run migrations: npm run db:migrate');
+        logger.warn('Server will continue without database connection');
     });
 
 app.use(cors({

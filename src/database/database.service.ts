@@ -267,13 +267,13 @@ export class DatabaseService {
     // Handle different possible formats of images data
     if (row.images) {
       if (Array.isArray(row.images)) {
-        images = row.images.filter(img => img && typeof img === 'string');
+        images = row.images.filter((img: any) => img && typeof img === 'string');
       } else if (typeof row.images === 'string') {
         try {
           // Try to parse as JSON array
           const parsed = JSON.parse(row.images);
           if (Array.isArray(parsed)) {
-            images = parsed.filter(img => img && typeof img === 'string');
+            images = parsed.filter((img: any) => img && typeof img === 'string');
           }
         } catch {
           // If not JSON, treat as single image URL

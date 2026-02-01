@@ -12,6 +12,7 @@ const neighborhoodController = new NeighborhoodController();
 router.get('/', (req, res) => propertyController.getProperties(req, res));
 router.get('/search/by-lifestyle', (req, res) => propertyController.searchByLifestyle(req, res));
 router.get('/:id', (req, res) => propertyController.getProperty(req, res));
+router.get('/:id/debug', (req, res) => propertyController.debugProperty(req, res)); // Debug endpoint
 router.get('/:id/viewing-count', (req, res) => propertyController.getViewingCount(req, res));
 router.get('/:id/activity', (req, res) => propertyController.getActivity(req, res));
 router.get('/:id/neighborhood', (req, res) => {
